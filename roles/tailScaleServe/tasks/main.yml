@@ -1,0 +1,18 @@
+---
+- name: Install tailscale if missing
+  ansible.builtin.shell: curl -fsSL https://tailscale.com/install.sh | sh
+  args:
+    creates: /usr/bin/tailscale
+
+- name: Ensure tailscale is up
+  ansible.builtin.command: "tailscale up --authkey={{ tailscale_auth_key }} --ssh"
+  become: true
+  changed_when: false
+
+- name: Apply tailscale serve mappings
+  ansible.builtin.command: "tailscale serve --bg --https={{ item.https_port }} {{ item.target }}"
+  become: true
+  loop: "{{ tailscale_serve_targets }}"
+  loop_control:
+    label: "{{ item.https_port }}"
+  changed_when: false

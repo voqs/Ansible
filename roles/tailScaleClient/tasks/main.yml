@@ -1,0 +1,12 @@
+---
+# Ensure the needed gnome extentions are installed
+
+- name: Install tailscale if missing
+  ansible.builtin.shell: curl -fsSL https://tailscale.com/install.sh | sh
+  args:
+    creates: /usr/bin/tailscale
+
+# Set the user perms for tailscale operator
+
+# Enable the operator on start up with systemd
+

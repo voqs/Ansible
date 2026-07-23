@@ -1,0 +1,11 @@
+tailscale_auth_key: "{{ vault_tailscale_auth_key }}"
+
+tailscale_serve_targets:
+  - https_port: 8443
+    target: "http://10.1.1.112:4533"   # navidrome
+  - https_port: 8444
+    target: "http://10.1.1.112:3000"   # grafana
+  - https_port: 8445
+    target: "http://10.1.1.112:9090"   # prometheus
+  - https_port: 8446
+    target: "http://10.1.1.112:9093"   # alertmanager
