@@ -1,23 +1,52 @@
 ---
-
 - name: Install base packages is installed and active
   block:
     - name: Update all packages
       ansible.builtin.apt:
         update_cache: yes
         upgrade: dist
-
     - name: Install AppArmor packages
       ansible.builtin.package:
         name:
           - openssh-server
           - apparmor
           - apparmor-utils
+          - apparmor-profiles
+          - apparmor-profiles-extra
         state: present
-
     - name: Enable and start AppArmor service
       ansible.builtin.systemd:
         name: apparmor
+        enabled: yes
+        state: started
+    - name: Get list of AppArmor profiles
+      ansible.builtin.command: aa-status --profiled
+      register: apparmor_profiles
+      changed_when: false
+    - name: Force all AppArmor profiles into enforce mode
+      ansible.builtin.command: aa-enforce /etc/apparmor.d/
+      changed_when: true
+
+- name: Configure automatic security updates
+  block:
+    - name: Install unattended-upgrades packages
+      ansible.builtin.package:
+        name:
+          - unattended-upgrades
+          - apt-listchanges
+        state: present
+    - name: Enable automatic updates
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+        mode: '0644'
+        owner: root
+        group: root
+    - name: Ensure unattended-upgrades service is enabled and running
+      ansible.builtin.systemd:
+        name: unattended-upgrades
         enabled: yes
         state: started
 
@@ -28,7 +57,6 @@
         path: /etc/ssh/sshd_config.d
         state: directory
         mode: '0755'
-
     - name: Drop hardened SSH config
       ansible.builtin.copy:
         dest: /etc/ssh/sshd_config.d/99-hardening.conf
@@ -38,7 +66,6 @@
         mode: '0600'
         owner: root
         group: root
-
     - name: Restart SSH socket and service
       ansible.builtin.systemd:
         name: "{{ item }}"
@@ -53,12 +80,10 @@
       ansible.builtin.user:
         name: root
         password: '!'
-
     - name: Kill any active sessions for default ubuntu user
       ansible.builtin.command: killall -u ubuntu
       failed_when: false
       changed_when: false
-
     - name: Remove the default ubuntu user and its home directory
       ansible.builtin.user:
         name: ubuntu
@@ -72,19 +97,15 @@
         name: ufw
         state: present
         update_cache: true
-
     - name: Ensure UFW is disabled
       ufw:
         state: enabled
-
     - name: Reset UFW to factory defaults
       ansible.builtin.command: ufw --force reset
       changed_when: true
-
     - name: Set strict default incoming deny policy
       ansible.builtin.command: ufw default deny incoming
       changed_when: true
-
     - name: Re-enable UFW
       ansible.builtin.command: ufw --force enable
       changed_when: true
