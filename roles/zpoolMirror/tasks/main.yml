@@ -1,0 +1,44 @@
+---
+
+- name: Install ZFS dependencies
+  apt:
+    name: zfsutils-linux
+    state: present
+    update_cache: yes
+
+- name: Guard against accidental wipe
+  ansible.builtin.assert:
+    that:
+      - zfs_pool_confirm_wipe | bool
+      - zfs_pool_disks | length >= 1
+    fail_msg: "Set zfs_pool_confirm_wipe: true and provide at least one disk in zfs_pool_disks."
+
+- name: Decipher pool topology from disk count
+  ansible.builtin.set_fact:
+    zfs_pool_topology: "{{ 'mirror' if zfs_pool_disks | length >= 2 else '' }}"
+
+- name: Check if pool already exists
+  ansible.builtin.command: "zpool list -H -o name {{ zfs_pool_name }}"
+  register: existing_pool
+  changed_when: false
+  failed_when: false
+
+- name: Wipe disks and create the pool
+  when: existing_pool.rc != 0
+  block:
+    - name: Wipe old filesystem/ZFS signatures from each disk
+      ansible.builtin.shell: |
+        wipefs -a {{ item }}
+        dd if=/dev/zero of={{ item }} bs=1M count=10 conv=fsync
+        end=$(( $(blockdev --getsize64 {{ item }}) / 1048576 - 10 ))
+        dd if=/dev/zero of={{ item }} bs=1M count=10 seek=${end} conv=fsync
+      args:
+        executable: /bin/bash
+      loop: "{{ zfs_pool_disks }}"
+
+    - name: Create the pool
+      ansible.builtin.command: >
+        zpool create -f -o ashift={{ zfs_pool_ashift }}
+        -O compression={{ zfs_pool_compression }}
+        -O mountpoint={{ zfs_pool_mountpoint }}
+        {{ zfs_pool_name }} {{ zfs_pool_topology }} {{ zfs_pool_disks | join(' ') }}

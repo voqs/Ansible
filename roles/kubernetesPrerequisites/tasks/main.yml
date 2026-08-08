@@ -128,6 +128,16 @@
     - kubeadm
     - kubectl
 
+- name: Check if helm is installed
+  ansible.builtin.command: helm version --short
+  register: helm_check
+  changed_when: false
+  failed_when: false
+
+- name: Install helm
+  ansible.builtin.shell: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  when: helm_check.rc != 0
+
 - name: Hold Kubernetes packages
   ansible.builtin.dpkg_selections:
     name: "{{ item }}"
