@@ -1,6 +1,5 @@
 ---
 
----
 zfs_pool_name: "k8s-pool"
 zfs_pool_disks: ["/dev/nvme1n1"]          # ["/dev/sdb"], ["/dev/sdb", "/dev/sdc"] (CHECK BEFORE RUNNING!!)
 zfs_pool_confirm_wipe: false
