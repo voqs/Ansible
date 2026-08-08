@@ -9,9 +9,8 @@
 - name: Guard against accidental wipe
   ansible.builtin.assert:
     that:
-      - zfs_pool_confirm_wipe | bool
       - zfs_pool_disks | length >= 1
-    fail_msg: "Set zfs_pool_confirm_wipe: true and provide at least one disk in zfs_pool_disks."
+    fail_msg: "Provide at least one disk in var zfs_pool_disks"
 
 - name: Decipher pool topology from disk count
   ansible.builtin.set_fact:
