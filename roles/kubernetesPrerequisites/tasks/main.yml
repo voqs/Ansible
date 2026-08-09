@@ -93,6 +93,7 @@
     - ca-certificates
     - curl
     - gpg
+    - yq
 
 - name: Create keyrings directory
   file:
