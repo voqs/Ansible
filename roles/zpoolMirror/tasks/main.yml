@@ -41,3 +41,12 @@
         -O compression={{ zfs_pool_compression }}
         -O mountpoint={{ zfs_pool_mountpoint }}
         {{ zfs_pool_name }} {{ zfs_pool_topology }} {{ zfs_pool_disks | join(' ') }}
+
+- name: Schedule daily pool snapshot
+  ansible.builtin.cron:
+    name: zfs-autosnapshot
+    cron_file: zfs-autosnapshot
+    user: root
+    minute: "0"
+    hour: "3"
+    job: 'zfs snapshot -r {{ zfs_pool_name }}@autosnap-$(date +\%F)'
