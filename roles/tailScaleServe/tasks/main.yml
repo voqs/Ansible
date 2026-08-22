@@ -10,7 +10,7 @@
   changed_when: false
 
 - name: Apply tailscale serve mappings
-  ansible.builtin.command: "tailscale serve --bg --https={{ item.https_port }} {{ item.target }}"
+  ansible.builtin.command: "tailscale serve --bg --http={{ item.https_port }} {{ item.target }}"
   become: true
   loop: "{{ tailscale_serve_targets }}"
   loop_control:

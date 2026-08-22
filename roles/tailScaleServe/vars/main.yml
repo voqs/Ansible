@@ -9,3 +9,5 @@ tailscale_serve_targets:
     target: "http://10.1.1.112:9090"   # prometheus
   - https_port: 8446
     target: "http://10.1.1.112:9093"   # alertmanager
+  - https_port: 8447
+    target: "http://10.1.1.112:8080"   # otterwiki
